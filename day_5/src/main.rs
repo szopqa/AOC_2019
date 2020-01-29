@@ -1,10 +1,8 @@
 use std::fs::File;
-use std::io::prelude::*;
 use std::io;
+use std::io::prelude::*;
 
-use crate::{
-  Computer::{ComputerIO}
-};
+use crate::Computer::ComputerIO;
 
 fn read_file_content(filename: String) -> String {
   let mut f = File::open(filename).expect("file not found");
@@ -18,9 +16,11 @@ fn read_file_content(filename: String) -> String {
 
 mod Computer;
 
-struct IO { value: i32 }
+struct IO {
+  value: i32,
+}
 impl ComputerIO for IO {
- fn get(&mut self) -> io::Result<i32> {
+  fn get(&mut self) -> io::Result<i32> {
     Ok(self.value)
   }
 
@@ -42,7 +42,12 @@ fn main() {
 
   println!("Num of intcode elements: {}", intcode.len());
 
-  // Part 1
-  let mut computer = Computer::Computer::new(intcode, IO {value: 1});
-  computer.run();
+  println!("Starting execution for part 1");
+  let mut computer_part_1 = Computer::Computer::new(intcode.clone(), IO { value: 1 });
+  computer_part_1.run();
+
+  println!("Starting execution for part 2");
+  // Part 2
+  let mut computer_part_2 = Computer::Computer::new(intcode.clone(), IO { value: 5 });
+  computer_part_2.run();
 }

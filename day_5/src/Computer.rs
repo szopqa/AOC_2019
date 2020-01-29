@@ -11,6 +11,10 @@ enum Opcode {
   Multiply,
   Input,
   Output,
+  JumpIfTrue,
+  JumpIfFalse,
+  LessThan,
+  Equals,
   Halt
 }
 
@@ -21,6 +25,10 @@ impl From<i32> for Opcode {
       2 => Opcode::Multiply,
       3 => Opcode::Input,
       4 => Opcode::Output,
+      5 => Opcode::JumpIfTrue,
+      6 => Opcode::JumpIfFalse,
+      7 => Opcode::LessThan,
+      8 => Opcode::Equals,
       99 => Opcode::Halt,
       _ => panic!("Invalid opcode!")
     }
@@ -149,6 +157,60 @@ where
     }
   }
 
+  fn jump_if_true(&mut self, parameters_modes: &Vec<ParameterMode>) -> () {
+    let is_non_zero = self.get_value_at_index(self.current_intcode_pos + 1, &parameters_modes[0]) != 0;
+
+    // println!("Checking if {} is non zero: {}", self.get_value_at_index(self.current_intcode_pos + 1, &parameters_modes[0]), is_non_zero);
+
+    if is_non_zero {
+      let new_intcode_pos = self.get_value_at_index(self.current_intcode_pos + 2, &parameters_modes[1]) as usize;
+      self.current_intcode_pos = new_intcode_pos;
+    } else {
+      self.current_intcode_pos += 3;
+    }
+  }
+
+  fn jump_if_false(&mut self, parameters_modes: &Vec<ParameterMode>) -> () {
+    let is_zero = self.get_value_at_index(self.current_intcode_pos + 1, &parameters_modes[0]) == 0;
+
+    // println!("Checking if {} is zero: {}", self.get_value_at_index(self.current_intcode_pos + 1, &parameters_modes[0]), is_zero);
+
+    if is_zero {
+      let new_intcode_pos = self.get_value_at_index(self.current_intcode_pos + 2, &parameters_modes[1]) as usize;
+      self.current_intcode_pos = new_intcode_pos;
+    } else {
+      self.current_intcode_pos += 3;
+    }
+  }
+
+  fn less_than(&mut self, parameter_modes: &Vec<ParameterMode>) -> () {
+    let x_1: i32 = self.get_value_at_index(self.current_intcode_pos + 1, &parameter_modes[0]);
+    let x_2: i32 = self.get_value_at_index(self.current_intcode_pos + 2, &parameter_modes[1]);
+
+    let dest_index = self.get_value_at_index(self.current_intcode_pos + 3, &ParameterMode::Immediate) as usize;
+    if x_1 < x_2 {
+      self.write_in_memory(dest_index, 1);
+    } else {
+      self.write_in_memory(dest_index, 0);
+    }
+
+    self.current_intcode_pos += 4;
+  }
+
+  fn equals(&mut self, parameter_modes: &Vec<ParameterMode>) -> () {
+    let x_1: i32 = self.get_value_at_index(self.current_intcode_pos + 1, &parameter_modes[0]);
+    let x_2: i32 = self.get_value_at_index(self.current_intcode_pos + 2, &parameter_modes[1]);
+
+    let dest_index = self.get_value_at_index(self.current_intcode_pos + 3, &ParameterMode::Immediate) as usize;
+    if x_1 == x_2 {
+      self.write_in_memory(dest_index, 1);
+    } else {
+      self.write_in_memory(dest_index, 0);
+    }
+
+    self.current_intcode_pos += 4;
+  }
+
   fn halt(&mut self) -> () {
     println!("Encountered HALT operation. Stopping intcode execution");
     println!("Intcode: {:?}", self.intcode);
@@ -163,6 +225,10 @@ where
       Opcode::Multiply => self.multiply(&parameters_modes),
       Opcode::Input => self.input(&parameters_modes),
       Opcode::Output => self.output(&parameters_modes),
+      Opcode::JumpIfTrue => self.jump_if_true(&parameters_modes),
+      Opcode::JumpIfFalse => self.jump_if_false(&parameters_modes),
+      Opcode::LessThan => self.less_than(&parameters_modes),
+      Opcode::Equals => self.equals(&parameters_modes),
       Opcode::Halt => self.halt(),
       _ => panic!("Unknown opcode value!")
     }

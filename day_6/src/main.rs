@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
-use std::collections::HashMap;
 
 fn read_file_content(filename: String) -> String {
   let mut f = File::open(filename).expect("file not found");
@@ -14,36 +13,81 @@ fn read_file_content(filename: String) -> String {
 }
 
 #[derive(Debug)]
-struct Element {
-    id: String
+struct SpaceElement {
+    element_name: String,
+    element_path: Vec<String>
 }
 
 #[derive(Debug)]
-struct Orbit {
-    suborbits: HashMap<String, Vec<Orbit>>
-}
-
 struct Space {
-    galaxy: Vec<Orbit>
+    space_elements: Vec<SpaceElement>,
+    orbit_count_checksum: i32
 }
 
 impl Space {
-    pub fn add_orbit_recursive(&mut self, root: Element, subelement: Element) -> () {
-        println!("Adding {:?} as subelement of orbit {:?}", subelement, root);
-        // TODO
+    pub fn new() -> Self {
+        Self {
+            space_elements: vec![],
+            orbit_count_checksum: 0
+        }
+    }
+
+    fn get_path_for_element(&self, element_name: &String) -> Option<&Vec<String>> {
+        for each_space_elem in &self.space_elements {
+            if (each_space_elem.element_name == *element_name) {
+               return Some(&each_space_elem.element_path);
+            }
+        }
+       None 
+    }
+
+    pub fn add_new(&mut self, root_element_name: String, orbiting_element: String) -> () {
+        let path_search_res = self.get_path_for_element(&root_element_name);
+        match path_search_res {
+            Some(existing_path) => {
+                println!("Existing path for {}: {:?}", root_element_name, existing_path);
+            },
+            None => {
+                println!("No path for {}. Creating new with {}",orbiting_element, root_element_name);
+                self.space_elements.push(
+                    SpaceElement { 
+                        element_name: root_element_name,
+                        element_path: vec![orbiting_element]
+                    }
+                )
+            }
+        }
     }
 }
+
+/* Transforms following input:
+    OM)B
+    B)C
+    C)D
+    D)E
+    E)F
+    B)G
+
+
+    into following dependency tree:
+    B -> OM
+    C -> B -> OM
+    D -> C -> B -> OM
+    E -> D -> C -> B -> OM
+    F -> E -> D -> C -> B -> OM
+    G -> B -> OM
+*/
 
 fn main() {
     let filename = String::from("test.txt");
     let input: String = read_file_content(filename);
 
-    let mut space = Space{ galaxy: vec![] };
+    let mut space = Space::new();
 
     for orbit_connection in input.lines() {
         let orbit_connection_parsed: Vec<&str> = orbit_connection.split(")").collect();
-        let root: Element = Element { id: orbit_connection_parsed[0].to_string() };
-        let subelement: Element = Element { id: orbit_connection_parsed[1].to_string() };
-        space.add_orbit_recursive(root, subelement)
+        let _root = orbit_connection_parsed[0].to_string();
+        let _subelement =  orbit_connection_parsed[1].to_string();
+        space.add_new(_root, _subelement);
     }
 }

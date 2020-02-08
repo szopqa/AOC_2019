@@ -46,13 +46,23 @@ impl Space {
         match path_search_res {
             Some(existing_path) => {
                 println!("Existing path for {}: {:?}", root_element_name, existing_path);
+
+                let mut new_elem_path = existing_path.to_vec().clone();
+                new_elem_path.append(&mut vec![root_element_name]);
+
+                self.space_elements.push(
+                    SpaceElement { 
+                        element_name: orbiting_element,
+                        element_path: new_elem_path 
+                    }
+                )
             },
             None => {
                 println!("No path for {}. Creating new with {}",orbiting_element, root_element_name);
                 self.space_elements.push(
                     SpaceElement { 
-                        element_name: root_element_name,
-                        element_path: vec![orbiting_element]
+                        element_name: orbiting_element,
+                        element_path: vec![root_element_name]
                     }
                 )
             }
@@ -85,9 +95,12 @@ fn main() {
     let mut space = Space::new();
 
     for orbit_connection in input.lines() {
+        println!("Processing: {}", orbit_connection);
         let orbit_connection_parsed: Vec<&str> = orbit_connection.split(")").collect();
         let _root = orbit_connection_parsed[0].to_string();
         let _subelement =  orbit_connection_parsed[1].to_string();
         space.add_new(_root, _subelement);
+
+//        println!("{:?}", space.space_elements);
     }
 }

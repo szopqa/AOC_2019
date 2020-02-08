@@ -50,6 +50,10 @@ impl Space {
                 let mut new_elem_path = existing_path.to_vec().clone();
                 new_elem_path.append(&mut vec![root_element_name]);
 
+                //new element + length of already saved subelement connections
+                let _num_of_connections: i32 = 1 + existing_path.to_vec().len() as i32;
+                self.orbit_count_checksum += _num_of_connections;
+
                 self.space_elements.push(
                     SpaceElement { 
                         element_name: orbiting_element,
@@ -59,6 +63,7 @@ impl Space {
             },
             None => {
                 println!("No path for {}. Creating new with {}",orbiting_element, root_element_name);
+                self.orbit_count_checksum += 1;
                 self.space_elements.push(
                     SpaceElement { 
                         element_name: orbiting_element,
@@ -103,4 +108,6 @@ fn main() {
 
 //        println!("{:?}", space.space_elements);
     }
+
+    println!("Found {} direct and indirect connections in current space map", space.orbit_count_checksum);
 }

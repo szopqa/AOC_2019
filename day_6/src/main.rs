@@ -1,6 +1,6 @@
 use std::fs::File;
-use std::io;
 use std::io::prelude::*;
+use std::collections::HashMap;
 
 fn read_file_content(filename: String) -> String {
   let mut f = File::open(filename).expect("file not found");
@@ -13,65 +13,34 @@ fn read_file_content(filename: String) -> String {
 }
 
 #[derive(Debug)]
-struct SpaceElement {
-    element_name: String,
-    element_path: Vec<String>
-}
-
-#[derive(Debug)]
 struct Space {
-    space_elements: Vec<SpaceElement>,
-    orbit_count_checksum: i32
+    space_elements: HashMap<String, String>,
 }
 
 impl Space {
     pub fn new() -> Self {
         Self {
-            space_elements: vec![],
-            orbit_count_checksum: 0
+            space_elements: HashMap::new()
         }
-    }
-
-    fn get_path_for_element(&self, element_name: &String) -> Option<&Vec<String>> {
-        for each_space_elem in &self.space_elements {
-            if (each_space_elem.element_name == *element_name) {
-               return Some(&each_space_elem.element_path);
-            }
-        }
-       None 
     }
 
     pub fn add_new(&mut self, root_element_name: String, orbiting_element: String) -> () {
-        let path_search_res = self.get_path_for_element(&root_element_name);
-        match path_search_res {
-            Some(existing_path) => {
-                println!("Existing path for {}: {:?}", root_element_name, existing_path);
+        self.space_elements.insert(orbiting_element, root_element_name);
+    }
 
-                let mut new_elem_path = existing_path.to_vec().clone();
-                new_elem_path.append(&mut vec![root_element_name]);
+    pub fn calculate_checksum(&self) -> i64 {
+        let mut _orbits = 0i64;
+        for root_element in self.space_elements.values() {
 
-                //new element + length of already saved subelement connections
-                let _num_of_connections: i32 = 1 + existing_path.to_vec().len() as i32;
-                self.orbit_count_checksum += _num_of_connections;
+            let mut _parent = Some(root_element);
 
-                self.space_elements.push(
-                    SpaceElement { 
-                        element_name: orbiting_element,
-                        element_path: new_elem_path 
-                    }
-                )
-            },
-            None => {
-                println!("No path for {}. Creating new with {}",orbiting_element, root_element_name);
-                self.orbit_count_checksum += 1;
-                self.space_elements.push(
-                    SpaceElement { 
-                        element_name: orbiting_element,
-                        element_path: vec![root_element_name]
-                    }
-                )
+            while let Some(_p) = _parent {
+                 _orbits += 1;
+                _parent = self.space_elements.get(_p);
             }
         }
+        
+        _orbits 
     }
 }
 
@@ -94,20 +63,49 @@ impl Space {
 */
 
 fn main() {
-    let filename = String::from("test.txt");
+    let filename = String::from("input.txt");
     let input: String = read_file_content(filename);
 
     let mut space = Space::new();
 
     for orbit_connection in input.lines() {
-        println!("Processing: {}", orbit_connection);
         let orbit_connection_parsed: Vec<&str> = orbit_connection.split(")").collect();
         let _root = orbit_connection_parsed[0].to_string();
         let _subelement =  orbit_connection_parsed[1].to_string();
         space.add_new(_root, _subelement);
-
-//        println!("{:?}", space.space_elements);
     }
 
-    println!("Found {} direct and indirect connections in current space map", space.orbit_count_checksum);
+    println!("Found {} direct and indirect orbits", space.calculate_checksum());
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_example_input() {
+        let example_input = vec![
+            "COM)B",
+            "B)C",
+            "C)D",
+            "D)E",
+            "E)F",
+            "B)G",
+            "G)H",
+            "D)I",
+            "E)J",
+            "J)K",
+            "K)L"
+        ];
+
+        let mut space = Space::new();
+        for orbit_connection in example_input.iter() {
+            let orbit_connection_parsed: Vec<&str> = orbit_connection.split(")").collect();
+            let _root = orbit_connection_parsed[0].to_string();
+            let _subelement =  orbit_connection_parsed[1].to_string();
+            space.add_new(_root, _subelement);
+        }
+
+        assert_eq!(space.calculate_checksum(), 42);
+    }
 }

@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
+use itertools::Itertools;
 
 use crate::Computer::ComputerIO;
 
@@ -53,46 +54,36 @@ impl ComputerIO for IO {
 }
 
 fn perform_thrusters_amplification(
-    intcode: Vec<i32>,
+    intcode: &Vec<i32>,
     (_a_ps, _b_ps, _c_ps, _d_ps, _e_ps): (i32, i32, i32, i32, i32)
-) -> io::Result<i32> {
+) -> i32 {
     
     // first amplifier A
     let _amplifier_a_io = IO::new(_a_ps, 0);
     let mut _amplifier_a = Computer::Computer::new(intcode.clone(), _amplifier_a_io);
     let _amplifier_a_output = _amplifier_a.run().unwrap();
 
-    println!("Amplifier A output: {}", _amplifier_a_output);
-
     // second amplifier B
     let _amplifier_b_io = IO::new(_b_ps, _amplifier_a_output);
     let mut _amplifier_b = Computer::Computer::new(intcode.clone(), _amplifier_b_io);
     let _amplifier_b_output = _amplifier_b.run().unwrap();
     
-    println!("Amplifier B output: {}", _amplifier_b_output);
-
     // third amplifier C
     let _amplifier_c_io = IO::new(_c_ps, _amplifier_b_output);
     let mut _amplifier_c = Computer::Computer::new(intcode.clone(), _amplifier_c_io);
     let _amplifier_c_output = _amplifier_c.run().unwrap();
     
-    println!("Amplifier C output: {}", _amplifier_c_output);
-
     // fourth amplifier D
     let _amplifier_d_io = IO::new(_d_ps, _amplifier_c_output);
     let mut _amplifier_d = Computer::Computer::new(intcode.clone(), _amplifier_d_io);
     let _amplifier_d_output = _amplifier_d.run().unwrap();
     
-    println!("Amplifier D output: {}", _amplifier_d_output);
-
     // fifth amplifier E
     let _amplifier_e_io = IO::new(_e_ps, _amplifier_d_output);
     let mut _amplifier_e = Computer::Computer::new(intcode.clone(), _amplifier_e_io);
     let _amplifier_e_output = _amplifier_e.run().unwrap();
     
-    println!("Amplifier E output: {}", _amplifier_e_output);
-
-    Ok(_amplifier_e_output)
+    _amplifier_e_output
 }
 
 fn main() {
@@ -106,6 +97,12 @@ fn main() {
         .map(|elem| elem.parse::<i32>().unwrap())
         .collect();
 
-    //TODO: Add module generating tuple below and calculating max amplification
-    perform_thrusters_amplification(intcode, (1,0,2,3,4));
+        let _max_amplification = 
+            (0..5)
+                .permutations(5)
+                .map(|p| perform_thrusters_amplification(&intcode, (p[0], p[1], p[2], p[3], p[4])))
+                .max()
+                .unwrap();
+
+    println!("Max amplification: {}", _max_amplification);
 }

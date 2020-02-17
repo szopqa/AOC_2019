@@ -157,7 +157,6 @@ where
 
     fn output(&mut self, parameters_modes: &Vec<ParameterMode>) -> () {
         let value = self.get_value_at_index(self.current_intcode_pos + 1, &parameters_modes[0]); // output also accepts param modes
-        println!("Test finished with status: {}", value);
         if self.computerIO.put(value).is_ok() {
             self.current_intcode_pos += 2;
         } else {

@@ -1,10 +1,10 @@
 use std::io;
 
 pub trait ComputerIO {
-    fn new(phase_setting: i32, input: i32) -> Self;
-    fn get(&mut self) -> io::Result<i32>;
-    fn put(&mut self, value: i32) -> io::Result<()>;
-    fn output(&self) -> io::Result<i32>;
+    fn new(phase_setting: i64, input: i64) -> Self;
+    fn get(&mut self) -> io::Result<i64>;
+    fn put(&mut self, value: i64) -> io::Result<()>;
+    fn output(&self) -> Option<i64>;
 }
 
 #[derive(Debug)]
@@ -20,8 +20,8 @@ enum Opcode {
     Halt,
 }
 
-impl From<i32> for Opcode {
-    fn from(code: i32) -> Self {
+impl From<i64> for Opcode {
+    fn from(code: i64) -> Self {
         match code {
             1 => Opcode::Add,
             2 => Opcode::Multiply,
@@ -43,8 +43,8 @@ enum ParameterMode {
     Immediate,
 }
 
-impl From<i32> for ParameterMode {
-    fn from(param_mode: i32) -> Self {
+impl From<i64> for ParameterMode {
+    fn from(param_mode: i64) -> Self {
         match param_mode {
             0 => ParameterMode::Position,
             1 => ParameterMode::Immediate,
@@ -59,7 +59,7 @@ where
     T: ComputerIO,
 {
     pub computerIO: T,
-    intcode: Vec<i32>,
+    intcode: Vec<i64>,
     is_running: bool,
     current_intcode_pos: usize,
 }
@@ -68,7 +68,7 @@ impl<T> Computer<T>
 where
     T: ComputerIO,
 {
-    pub fn new(intcode: Vec<i32>, computerIO: T) -> Self {
+    pub fn new(intcode: Vec<i64>, computerIO: T) -> Self {
         Self {
             intcode,
             computerIO,
@@ -77,7 +77,7 @@ where
         }
     }
 
-    fn get_instruction(&self) -> i32 {
+    fn get_instruction(&self) -> i64 {
         let position: usize = self.current_intcode_pos;
 
         if position >= self.intcode.len() {
@@ -87,11 +87,11 @@ where
         self.intcode[position]
     }
 
-    fn write_in_memory(&mut self, address: usize, value: i32) -> () {
+    fn write_in_memory(&mut self, address: usize, value: i64) -> () {
         self.intcode[address] = value;
     }
 
-    fn decode_instruction(instruction: i32) -> (Opcode, Vec<ParameterMode>) {
+    fn decode_instruction(instruction: i64) -> (Opcode, Vec<ParameterMode>) {
         let opcode = instruction % 100;
         let param_modes = vec![
             ((instruction / 100) % 10).into(),
@@ -102,7 +102,7 @@ where
         (opcode.into(), param_modes)
     }
 
-    fn get_value_at_index(&self, index: usize, parameter_mode: &ParameterMode) -> i32 {
+    fn get_value_at_index(&self, index: usize, parameter_mode: &ParameterMode) -> i64 {
         match parameter_mode {
             ParameterMode::Position => self.intcode[self.intcode[index] as usize],
             ParameterMode::Immediate => self.intcode[index],
@@ -110,8 +110,8 @@ where
     }
 
     fn add(&mut self, parameters_modes: &Vec<ParameterMode>) -> () {
-        let x_1: i32 = self.get_value_at_index(self.current_intcode_pos + 1, &parameters_modes[0]);
-        let x_2: i32 = self.get_value_at_index(self.current_intcode_pos + 2, &parameters_modes[1]);
+        let x_1: i64 = self.get_value_at_index(self.current_intcode_pos + 1, &parameters_modes[0]);
+        let x_2: i64 = self.get_value_at_index(self.current_intcode_pos + 2, &parameters_modes[1]);
         // destination is always in position mode -> taking its value in Immediate mode
         let dest_index = self
             .get_value_at_index(self.current_intcode_pos + 3, &ParameterMode::Immediate)
@@ -127,8 +127,8 @@ where
     }
 
     fn multiply(&mut self, parameters_modes: &Vec<ParameterMode>) -> () {
-        let x_1: i32 = self.get_value_at_index(self.current_intcode_pos + 1, &parameters_modes[0]);
-        let x_2: i32 = self.get_value_at_index(self.current_intcode_pos + 2, &parameters_modes[1]);
+        let x_1: i64 = self.get_value_at_index(self.current_intcode_pos + 1, &parameters_modes[0]);
+        let x_2: i64 = self.get_value_at_index(self.current_intcode_pos + 2, &parameters_modes[1]);
         // destination is always in position mode -> taking its value in Immediate mode
         let dest_index = self
             .get_value_at_index(self.current_intcode_pos + 3, &ParameterMode::Immediate)
@@ -197,8 +197,8 @@ where
     }
 
     fn less_than(&mut self, parameter_modes: &Vec<ParameterMode>) -> () {
-        let x_1: i32 = self.get_value_at_index(self.current_intcode_pos + 1, &parameter_modes[0]);
-        let x_2: i32 = self.get_value_at_index(self.current_intcode_pos + 2, &parameter_modes[1]);
+        let x_1: i64 = self.get_value_at_index(self.current_intcode_pos + 1, &parameter_modes[0]);
+        let x_2: i64 = self.get_value_at_index(self.current_intcode_pos + 2, &parameter_modes[1]);
 
         let dest_index = self
             .get_value_at_index(self.current_intcode_pos + 3, &ParameterMode::Immediate)
@@ -213,8 +213,8 @@ where
     }
 
     fn equals(&mut self, parameter_modes: &Vec<ParameterMode>) -> () {
-        let x_1: i32 = self.get_value_at_index(self.current_intcode_pos + 1, &parameter_modes[0]);
-        let x_2: i32 = self.get_value_at_index(self.current_intcode_pos + 2, &parameter_modes[1]);
+        let x_1: i64 = self.get_value_at_index(self.current_intcode_pos + 1, &parameter_modes[0]);
+        let x_2: i64 = self.get_value_at_index(self.current_intcode_pos + 2, &parameter_modes[1]);
 
         let dest_index = self
             .get_value_at_index(self.current_intcode_pos + 3, &ParameterMode::Immediate)
@@ -229,7 +229,7 @@ where
     }
 
     fn halt(&mut self) -> () {
-        // println!("Encountered HALT operation. Stopping intcode execution");
+        println!("Encountered HALT operation. Stopping intcode execution");
         // println!("Intcode: {:?}", self.intcode);
         self.is_running = false;
     }
@@ -251,11 +251,31 @@ where
         }
     }
 
-    pub fn run(&mut self) -> io::Result<i32> {
+    pub fn run(&mut self) -> Option<i64> {
         while self.is_running {
             self.calculate_next();
         }
 
         self.computerIO.output()
     }
+
+    pub fn run_till_output(&mut self) -> Option<i64> {
+        let mut _computer_out = self.computerIO.output();
+
+        loop {
+            match self.computerIO.output() {
+                Some(_output) => {
+                    _computer_out = Some(_output);
+                    break;
+                },
+                None => {
+                    self.calculate_next();
+                }
+            }
+        }
+
+        _computer_out
+    }
+
+    pub fn is_processing(&self) -> bool { self.is_running }
 }

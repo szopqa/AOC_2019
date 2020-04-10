@@ -31,6 +31,65 @@ impl <'a> Layer <'a> {
     }
 }
 
+struct Image <'a> {
+    _layers: Vec<Layer<'a>>,
+    _width: i32,
+    _height: i32
+}
+
+impl <'a> Image <'a> {
+    fn new(_layers: Vec<Layer<'a>>, _width: i32, _height: i32) -> Self {
+        Image {
+            _layers,
+            _width,
+            _height
+        }
+    }
+
+    fn _value_to_pix_representation(value: char) -> char {
+        match value {
+            '0' => ' ',
+            '1' => '#',
+            _ => panic!("Unknown pixel value!")
+        }
+    }
+
+    fn render(&self) -> () {
+        let _pixels_in_layer = self._height * self._width;
+
+        let mut _out_image: Vec<char> = (0.._pixels_in_layer).map(|_| '0').collect();
+
+        for _pixel_index in 0.._pixels_in_layer as usize {
+            let mut _out_pixel_value: char = '0';
+
+            for _each_layer in &self._layers {
+                let _pixel_value = &_each_layer._elements.chars().nth(_pixel_index).unwrap();
+
+                match _pixel_value {
+                    '2' => continue,
+                    _ => {
+                        _out_pixel_value = *_pixel_value;
+                        break;
+                    }
+                }
+            }
+
+            _out_image[_pixel_index] = Self::_value_to_pix_representation(_out_pixel_value);
+        }
+
+        let mut _rendered_image = String::from("");
+        for (_index, _pixel_value) in _out_image.iter().enumerate() {
+            if _index % self._width as usize == 0 {
+                _rendered_image += "\n";
+            }
+
+            _rendered_image.push(*_pixel_value);
+        }
+
+        println!("{}", _rendered_image);
+    }
+}
+
 fn main() {
     let _filename: String = String::from("input.txt");
     let _input = read_file_content(_filename);
@@ -50,8 +109,8 @@ fn main() {
     }
 
     let mut _min_zeros_occurrences_num = <i32>::max_value();
-    let mut _layer_with_min_zeros: Layer = Layer{ _elements: "" }; 
-    for _each_layer in _layers {
+    let mut _layer_with_min_zeros: &Layer = &Layer{ _elements: "" }; 
+    for _each_layer in &_layers {
         let _min_zeros_occurrences_in_layer = _each_layer.get_num_of_occurrences('0');
 
         if _min_zeros_occurrences_in_layer < _min_zeros_occurrences_num {
@@ -62,4 +121,8 @@ fn main() {
 
     let _part_one_result = _layer_with_min_zeros.get_num_of_occurrences('1') * _layer_with_min_zeros.get_num_of_occurrences('2');
     println!("Part one solution: {}", _part_one_result);
+
+    let _image = Image::new(_layers, IMAGE_WIDTH, IMAGE_HIGHT);
+    println!("Part two solution");
+    _image.render();
 }
